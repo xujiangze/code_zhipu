@@ -22,7 +22,14 @@ def verify_api_key_not_empty():
 
 
 def generate_token(apikey: str, exp_seconds: int) -> str:
+    """
+    生成智谱开放平台API的token
     # reference: https://open.bigmodel.cn/dev/api#nosdk
+    :param apikey:
+    :param exp_seconds:
+    :return:
+    """
+
     try:
         id, secret = apikey.split(".")
     except Exception as e:
@@ -172,10 +179,10 @@ def generate_cogview_image(prompt: str) -> str:
     """ 调用cogview生成图片，返回url """
     # reference: https://open.bigmodel.cn/dev/api#cogview
     from zhipuai import ZhipuAI
-    client = ZhipuAI(api_key=API_KEY) # 请填写您自己的APIKey
+    client = ZhipuAI(api_key=API_KEY)  # 请填写您自己的APIKey
     
     response = client.images.generations(
-        model="cogview-3", #填写需要调用的模型名称
+        model="cogview-3",  # 填写需要调用的模型名称
         prompt=prompt
     )
     return response.data[0].url
