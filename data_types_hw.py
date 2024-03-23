@@ -14,11 +14,7 @@ if TYPE_CHECKING:
     import streamlit.elements.image
 
 
-class BaseMsg(TypedDict):
-    pass
-
-
-class TextMsg(BaseMsg):
+class TextMsg(pydantic.BaseModel):
     """文本消息"""
 
     # 在类属性标注的下一行用三引号注释，vscode中
@@ -28,7 +24,7 @@ class TextMsg(BaseMsg):
     """消息内容"""
 
 
-class ImageMsg(BaseMsg):
+class ImageMsg(pydantic.BaseModel):
     """图片消息"""
     role: Literal["image"]
     image: "streamlit.elements.image.ImageOrImageList"
@@ -47,7 +43,7 @@ TextMsgList = List[TextMsg]
 MsgList = List[Msg]
 
 
-class CharacterMeta(TypedDict):
+class CharacterMeta(pydantic.BaseModel):
     """角色扮演设定，它是CharacterGLM API所需的参数"""
     user_info: str
     """用户人设"""
@@ -84,8 +80,10 @@ class User(pydantic.BaseModel):
 
 if __name__ == "__main__":
     # 尝试在VSCode等IDE中自己敲一遍下面的代码，观察IDE能提供哪些代码提示
-    text_msg = TextMsg(role="user")
-    text_msg["content"] = "42"
+    # 其中提供了检查TextMsg(role="abc", content="xxx") 会出错
+    text_msg = TextMsg(role="user", content="xxx")
+    text_msg.content = 42
+    # text_msg["content"] = "42"  # 如果使用 baseModel就只有属性这种
     print(type(text_msg))
     print(text_msg)
 
