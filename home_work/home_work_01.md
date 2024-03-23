@@ -1,4 +1,8 @@
-# home_work_01
+# 要求
+
+作业1：除了`typing.TypedDict`之外，也有其他的库用类型标注的方式完成数据类型定义。请了解`dataclasses`和`pydantic`的用法，尝试用`dataclasses.dataclass`或`pydantic.BaseModel`实现`TextMsg`。思考这三种方式各自有何优缺点。
+
+# 解答
 见代码: data_types_hw.py
 
 ## dataclasses
