@@ -42,4 +42,4 @@ streamlit run --server.address 127.0.0.1 characterglm_autochat.py
 3.保存对话数据, 重新加载
 ![img.png](images/保存和加载.png)
 历史数据展示, 可加载历史数据, 并进行上一次对话.
-![img.png](images/历史数据.png)
+![img.png](images/历史数据展示.png)
