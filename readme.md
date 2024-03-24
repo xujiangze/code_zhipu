@@ -27,3 +27,10 @@
 将生成的对话数据保存到文件中。
 （可选）设计图形界面，通过点击图形界面上的按钮执行对话数据生成，并展示对话数据。
 
+实现: 见代码
+characterglm_autochat.py
+
+启动方式
+```bash
+streamlit run --server.address 127.0.0.1 characterglm_autochat.py
+```
