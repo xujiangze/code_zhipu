@@ -13,6 +13,7 @@ python-dotenv
 streamlit run characterglm_api_demo_streamlit.py
 ```
 """
+import json
 import os
 import itertools
 from typing import Iterator, Optional
@@ -25,7 +26,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import api
-from api import generate_chat_scene_prompt, generate_role_appearance, get_characterglm_response, generate_cogview_image
+from api import generate_chat_scene_prompt, generate_role_appearance, get_characterglm_response, \
+    generate_cogview_image, generate_role_info
 from data_types import TextMsg, ImageMsg, TextMsgList, MsgList, filter_text_msg
 
 st.set_page_config(page_title="CharacterGLM API Demo", page_icon="🤖", layout="wide")
@@ -57,12 +59,49 @@ class SessionHelper(object):
             st.session_state["history"] = []
         if "meta" not in st.session_state:
             st.session_state["meta"] = {
-                "user_info": "",
-                "bot_info": "",
-                "bot_name": "",
-                "user_name": "",
-                "image_style": "",
+                # 角色a
+                "bot_a_source": "",
+                "bot_a_name": "",
+                "bot_a_info": "",
+                "bot_a_image_style": "",
+                # 角色b
+                "bot_b_source": "",
+                "bot_b_name": "",
+                "bot_b_info": "",
+                "bot_b_image_style": "",
             }
+
+    @staticmethod
+    def gen_bot_a_role():
+        if not st.session_state["meta"]["bot_a_source"]:
+            st.error("请填写角色A人设来源素材")
+            return
+
+        role_json = generate_role_info(st.session_state["meta"]["bot_a_source"])
+        role_info = json.loads(role_json)
+        st.session_state["meta"]["bot_a_name"] = role_info["name"]
+        st.session_state["meta"]["bot_a_info"] = role_info["info"]
+        st.session_state["bot_a_name"] = role_info["name"]
+        st.session_state["bot_a_info"] = role_info["info"]
+        st.rerun()
+
+    @staticmethod
+    def gen_bot_b_role():
+        if not st.session_state["meta"]["bot_b_source"]:
+            st.error("请填写角色B人设来源素材2344")
+            return
+
+        try:
+            role_json = generate_role_info(st.session_state["meta"]["bot_b_source"])
+            role_info = json.loads(role_json)
+            st.session_state["meta"]["bot_b_name"] = role_info["name"]
+            st.session_state["meta"]["bot_b_info"] = role_info["info"]
+            st.session_state["bot_b_name"] = role_info["name"]
+            st.session_state["bot_b_info"] = role_info["info"]
+            # 指定
+            st.rerun()
+        except Exception as e:
+            st.error(f"生成角色B人设失败: {e}")
 
     @staticmethod
     def init_session_history():
@@ -71,11 +110,17 @@ class SessionHelper(object):
     @staticmethod
     def verify_meta() -> bool:
         # 检查`角色名`和`角色人设`是否空，若为空，则弹出提醒
-        if st.session_state["meta"]["bot_name"] == "" or st.session_state["meta"]["bot_info"] == "":
-            st.error("角色名和角色人设不能为空")
+        print("12332323424234")
+        print(st.session_state["meta"])
+        if st.session_state["meta"]["bot_a_name"] == "" or st.session_state["meta"]["bot_a_info"] == "":
+            st.error("角色A名和角色A人设不能为空")
             return False
-        else:
-            return True
+
+        if st.session_state["meta"]["bot_b_name"] == "" or st.session_state["meta"]["bot_b_info"] == "":
+            st.error("角色B名和角色B人设不能为空")
+            return False
+
+        return True
 
     @staticmethod
     def clean_meta():
@@ -84,10 +129,16 @@ class SessionHelper(object):
         :return:
         """
         st.session_state["meta"] = {
-            "user_info": "",
-            "bot_info": "",
-            "bot_name": "",
-            "user_name": ""
+            # 角色a
+            "bot_a_source": "",
+            "bot_a_name": "",
+            "bot_a_info": "",
+            "bot_a_image_style": "",
+            # 角色b
+            "bot_b_source": "",
+            "bot_b_name": "",
+            "bot_b_info": "",
+            "bot_b_image_style": "",
         }
         st.rerun()
 
@@ -114,6 +165,16 @@ class SessionHelper(object):
 
 
 class ViewDrawer(object):
+    display_map = {
+        "assistant": "bot_a",
+        "user": "bot_b"
+    }
+
+    @staticmethod
+    def set_bot_a_source():
+        st.session_state["meta"]["bot_a_source"] = st.text_area("A人设来源素材",
+                                                                st.session_state["meta"]["bot_a_source"])
+
     @staticmethod
     def draw_character_info():
         """
@@ -121,35 +182,65 @@ class ViewDrawer(object):
         :return:
         """
         with st.container():
-            col1, col2 = st.columns(2)
+            col1, col2, col3 = st.columns(3)
             with col1:
-                st.text_input(label="角色名", key="bot_name",
-                              on_change=lambda: st.session_state["meta"].update(bot_name=st.session_state["bot_name"]),
-                              help="模型所扮演的角色的名字，不可以为空")
-                st.text_area(label="角色人设", key="bot_info",
-                             on_change=lambda: st.session_state["meta"].update(bot_info=st.session_state["bot_info"]),
+                st.text_area(label="A人设来源素材", key="bot_a_source",
+                             on_change=lambda: st.session_state["meta"]
+                             .update(bot_a_source=st.session_state["bot_a_source"]),
+                             help="将根据人设自动生成角色名和人设信息")
+                st.text_input(label="角色A名", key="bot_a_name",
+                              on_change=lambda: st.session_state["meta"].update(
+                                  bot_a_name=st.session_state["bot_a_name"]),
+                              help="模型角色A所扮演的角色的名字，不可以为空")
+                st.text_area(label="角色A人设", key="bot_a_info",
+                             on_change=lambda: st.session_state["meta"].update(
+                                 bot_a_info=st.session_state["bot_a_info"]),
                              help="角色的详细人设信息，不可以为空")
                 st.selectbox(label="生成风格",
                              options=["二次元风格", "写实风格", "童话", "玄幻", "修真", "蒸汽朋克", "哥特式"],
-                             key="image_style",
+                             key="bot_a_image_style",
                              on_change=lambda: st.session_state["meta"].update(
-                                 image_style=st.session_state["image_style"]))
+                                 bot_a_image_style=st.session_state["bot_a_image_style"]))
 
             with col2:
-                st.text_input(label="用户名", value="用户", key="user_name",
+                st.text_area(label="B人设来源素材", key="bot_b_source",
+                             on_change=lambda: st.session_state["meta"]
+                             .update(bot_b_source=st.session_state["bot_b_source"]),
+                             help="将根据人设自动生"
+                                  "成角色名和人设信息")
+                st.text_input(label="角色B名", key="bot_b_name",
                               on_change=lambda: st.session_state["meta"].update(
-                                  user_name=st.session_state["user_name"]),
-                              help="用户的名字，默认为用户")
-                st.text_area(label="用户人设", value="", key="user_info",
-                             on_change=lambda: st.session_state["meta"].update(user_info=st.session_state["user_info"]),
-                             help="用户的详细人设信息，可以为空")
+                                  bot_b_name=st.session_state["bot_b_name"]),
+                              help="模型角色A所扮演的角色的名字，不可以为空")
+                st.text_area(label="角色B人设", key="bot_b_info",
+                             on_change=lambda: st.session_state["meta"].update(
+                                 bot_b_info=st.session_state["bot_b_info"]),
+                             help="角色的详细人设信息，不可以为空")
+                st.selectbox(label="生成风格",
+                             options=["二次元风格", "写实风格", "童话", "玄幻", "修真", "蒸汽朋克", "哥特式"],
+                             key="bot_b_image_style",
+                             on_change=lambda: st.session_state["meta"].update(
+                                 bot_b_image_style=st.session_state["bot_b_image_style"]))
+
+            with col3:
+                st.text_input(label="对话历史文件路径", key="meta_path",
+                              on_change=lambda: st.session_state["meta"].update(
+                                  meta_path=st.session_state["meta_path"]),
+                              help="对话历史文件路径")
 
     @staticmethod
     def draw_help_buttons():
         button_labels = {
             "clear_meta": "清空人设",
             "clear_history": "清空对话历史",
-            "gen_picture": "生成图片",
+            "gen_a_picture": "生成角色A图片",
+            "gen_b_picture": "生成角色B图片",
+            "gen_charactor_bot_a": "生成角色A人设",
+            "gen_charactor_bot_b": "生成角色B人设",
+            "bot_a_talk": "角色A对话",
+            "bot_b_talk": "角色B对话",
+            "save_meta": "保存信息",
+            "load_meta": "加载记录",
         }
         if debug:
             button_labels.update({
@@ -168,13 +259,38 @@ class ViewDrawer(object):
             with button_key_to_col["clear_meta"]:
                 st.button(button_labels["clear_meta"], key="clear_meta", on_click=SessionHelper.clean_meta)
 
+            with button_key_to_col['gen_charactor_bot_a']:
+                # 生成角色A人设
+                st.button(button_labels["gen_charactor_bot_a"], key="gen_charactor_bot_a",
+                          on_click=SessionHelper.gen_bot_a_role)
+
+            with button_key_to_col['gen_charactor_bot_b']:
+                # 生成角色B人设
+                st.button(button_labels["gen_charactor_bot_b"], key="gen_charactor_bot_b",
+                          on_click=SessionHelper.gen_bot_b_role)
+
             # 清空对话历史
             with button_key_to_col["clear_history"]:
                 st.button(button_labels["clear_history"], key="clear_history", on_click=SessionHelper.clean_history)
 
             # 生成图片
-            with button_key_to_col["gen_picture"]:
-                gen_picture = st.button(button_labels["gen_picture"], key="gen_picture")
+            with button_key_to_col["gen_a_picture"]:
+                gen_a_picture = st.button(button_labels["gen_a_picture"], key="gen_a_picture")
+
+            with button_key_to_col["gen_b_picture"]:
+                gen_b_picture = st.button(button_labels["gen_b_picture"], key="gen_b_picture")
+
+            with button_key_to_col["bot_a_talk"]:
+                st.button(button_labels["bot_a_talk"], key="bot_a_talk", on_click=lambda: deal_talk(reverse=False))
+
+            with button_key_to_col["bot_b_talk"]:
+                st.button(button_labels["bot_b_talk"], key="bot_b_talk", on_click=lambda: deal_talk(reverse=True))
+
+            with button_key_to_col["save_meta"]:
+                st.button(button_labels["save_meta"], key="save_meta", on_click=lambda: save_meta())
+
+            with button_key_to_col["load_meta"]:
+                st.button(button_labels["load_meta"], key="load_meta", on_click=lambda: load_meta())
 
             if debug:
                 # 查看API_KEY
@@ -189,7 +305,7 @@ class ViewDrawer(object):
                 with button_key_to_col["show_history"]:
                     st.button(button_labels["show_history"], key="show_history", on_click=SessionHelper.show_history)
 
-        return gen_picture
+        return gen_a_picture, gen_b_picture
 
     @staticmethod
     def draw_history():
@@ -278,18 +394,123 @@ def init_session():
     # 初始化
     SessionHelper.init_session_state()
 
+    # print(st.session_state)
+
 
 def init_drawer_setting():
     # 绘制角色信息输入框
     ViewDrawer.draw_character_info()
     # 绘制帮助按钮
-    gen_picture = ViewDrawer.draw_help_buttons()
-    return gen_picture
+    gen_a_picture, gen_b_picture = ViewDrawer.draw_help_buttons()
+    return gen_a_picture, gen_b_picture
 
 
 def init_drawer_history():
     # 展示对话历史
     ViewDrawer.draw_history()
+
+
+def get_session_meta(meta, reserve=False):
+    if reserve:
+        return {
+            "bot_name": meta["bot_b_name"],
+            "bot_info": meta["bot_b_info"],
+            "user_name": meta["bot_a_name"],
+            "user_info": meta["bot_a_info"],
+        }
+    else:
+        return {
+            "bot_name": meta["bot_a_name"],
+            "bot_info": meta["bot_a_info"],
+            "user_name": meta["bot_b_name"],
+            "user_info": meta["bot_b_info"],
+        }
+
+
+def get_meta():
+    return {
+        "bot_a_source": st.session_state["bot_a_source"],
+        "bot_a_name": st.session_state["bot_a_name"],
+        "bot_a_info": st.session_state["bot_a_info"],
+        "bot_a_image_style": st.session_state["bot_a_image_style"],
+        "bot_b_source": st.session_state["bot_b_source"],
+        "bot_b_name": st.session_state["bot_b_name"],
+        "bot_b_info": st.session_state["bot_b_info"],
+        "bot_b_image_style": st.session_state["bot_b_image_style"],
+        "history": st.session_state["history"],
+    }
+
+
+def load_meta():
+    file_path = st.session_state["meta_path"]
+    if not os.path.exists(file_path):
+        st.error("文件不存在")
+        return
+
+    with open(file_path, "r") as f:
+        meta = json.load(f)
+        st.session_state["bot_a_source"] = meta["bot_a_source"]
+        st.session_state["bot_a_name"] = meta["bot_a_name"]
+        st.session_state["bot_a_info"] = meta["bot_a_info"]
+        st.session_state["bot_a_image_style"] = meta["bot_a_image_style"]
+        st.session_state["bot_b_source"] = meta["bot_b_source"]
+        st.session_state["bot_b_name"] = meta["bot_b_name"]
+        st.session_state["bot_b_info"] = meta["bot_b_info"]
+        st.session_state["bot_b_image_style"] = meta["bot_b_image_style"]
+        st.session_state["history"] = meta["history"]
+        # 设置meta
+        st.session_state["meta"] = {
+            "bot_a_source": meta["bot_a_source"],
+            "bot_a_name": meta["bot_a_name"],
+            "bot_a_info": meta["bot_a_info"],
+            "bot_a_image_style": meta["bot_a_image_style"],
+            "bot_b_source": meta["bot_b_source"],
+            "bot_b_name": meta["bot_b_name"],
+            "bot_b_info": meta["bot_b_info"],
+            "bot_b_image_style": meta["bot_b_image_style"],
+        }
+        st.rerun()
+
+
+def save_meta():
+    file_path = st.session_state["meta_path"]
+    print("xxxxxxxxxxxx")
+    ret = get_meta()
+    print(json.dumps(ret))
+    print("==333===")
+    print(st.session_state)
+    print(file_path)
+    with open(file_path, "w") as f:
+        json.dump(ret, f, indent=4, ensure_ascii=False)
+
+    st.success("保存成功")
+
+def deal_talk(reverse=False):
+    input_placeholder, message_placeholder = ViewDrawer.draw_empty_chat_message()
+    if not SessionHelper.verify_meta():
+        return
+
+    if not api.API_KEY:
+        st.error("未设置API_KEY")
+
+    if not st.session_state["history"]:
+        st.error("请先发起一个话题")
+        return
+
+    # 获取回复
+    response_stream = get_characterglm_response(filter_text_msg(st.session_state["history"]),
+                                                meta=get_session_meta(st.session_state["meta"], reverse))
+
+    bot_response = Tools.output_stream_response(response_stream, message_placeholder)
+
+    if not bot_response:
+        message_placeholder.markdown("生成出错")
+        st.session_state["history"].pop()
+    else:
+        if reverse:
+            st.session_state["history"].append(TextMsg({"role": "user", "content": bot_response}))
+        else:
+            st.session_state["history"].append(TextMsg({"role": "assistant", "content": bot_response}))
 
 
 def init_draw_user_input():
@@ -307,10 +528,12 @@ def init_draw_user_input():
         # 展示用户输入
         input_placeholder.markdown(query)
         st.session_state["history"].append(TextMsg({"role": "user", "content": query}))
+        print(st.session_state["history"])
 
         # 获取回复
         response_stream = get_characterglm_response(filter_text_msg(st.session_state["history"]),
-                                                    meta=st.session_state["meta"])
+                                                    meta=get_session_meta(st.session_state["meta"]))
+
         bot_response = Tools.output_stream_response(response_stream, message_placeholder)
 
         if not bot_response:
@@ -325,17 +548,21 @@ def main():
     init_session()
 
     # 绘制设定框
-    gen_picture = init_drawer_setting()
+    gen_a_picture, gen_b_picture = init_drawer_setting()
 
     # 绘制历史
     init_drawer_history()
 
     # 绘制新图片, 以防卡主放历史后面
-    if gen_picture:
+    if gen_a_picture:
+        ViewDrawer.draw_new_image()
+
+    if gen_b_picture:
         ViewDrawer.draw_new_image()
 
     # 绘制用户输入框
     init_draw_user_input()
 
 
-main()
+if __name__ == '__main__':
+    main()
