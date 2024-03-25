@@ -28,18 +28,18 @@
 （可选）设计图形界面，通过点击图形界面上的按钮执行对话数据生成，并展示对话数据。
 
 实现: 见代码
-characterglm_autochat.py
+`characterglm_autochat.py`
 
 启动方式
 ```bash
 streamlit run --server.address 127.0.0.1 characterglm_autochat.py
 ```
 
-1.基于文本的生成人设
+1.基于人设素材文本的生成人设(案例: 美猴王 和 六耳猕猴的真假美猴王)
 ![img.png](images/生成人设.png)
-2.交替生成对话
+2.交替生成对话(通过先输入话题引导, 再点击角色A/B, 让其进行对话.)
 ![img.png](images/交替对话.png)
-3.保存对话数据, 重新加载
-![img.png](images/保存和加载.png)
-历史数据展示, 可加载历史数据, 并进行上一次对话.
+3. 保存和加载
+- 保存对话数据, 重新加载, 再对话框输入保存路径. 点击保存信息之后即可保存.
+- 历史数据重新加载, 会自动加载上一次保存的对话数据.
 ![img.png](images/历史数据展示.png)
