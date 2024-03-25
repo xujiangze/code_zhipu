@@ -28,7 +28,7 @@ from api import generate_chat_scene_prompt, generate_role_appearance, get_charac
 from data_types import TextMsg, ImageMsg, TextMsgList, MsgList, filter_text_msg
 
 st.set_page_config(page_title="CharacterGLM API Demo", page_icon="🤖", layout="wide")
-debug = os.getenv("DEBUG", "").lower() in ("1", "yes", "y", "true", "t", "on")
+debug = os.getenv("DEBUG", "yes").lower() in ("1", "yes", "y", "true", "t", "on")
 
 
 def update_api_key(key: Optional[str] = None):
@@ -51,7 +51,8 @@ if "meta" not in st.session_state:
         "user_info": "",
         "bot_info": "",
         "bot_name": "",
-        "user_name": ""
+        "user_name": "",
+        "image_style": "",
     }
 
 
@@ -67,9 +68,10 @@ meta_labels = {
     "user_info": "用户人设"
 }
 
+
 # 2x2 layout
 with st.container():
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.text_input(label="角色名", key="bot_name", on_change=lambda : st.session_state["meta"].update(bot_name=st.session_state["bot_name"]), help="模型所扮演的角色的名字，不可以为空")
         st.text_area(label="角色人设", key="bot_info", on_change=lambda : st.session_state["meta"].update(bot_info=st.session_state["bot_info"]), help="角色的详细人设信息，不可以为空")
@@ -78,6 +80,14 @@ with st.container():
         st.text_input(label="用户名", value="用户", key="user_name", on_change=lambda : st.session_state["meta"].update(user_name=st.session_state["user_name"]), help="用户的名字，默认为用户")
         st.text_area(label="用户人设", value="", key="user_info", on_change=lambda : st.session_state["meta"].update(user_info=st.session_state["user_info"]), help="用户的详细人设信息，可以为空")
 
+    with col3:
+        # selectbox版本
+        st.selectbox(label="生成风格", options=["二次元风格", "写实风格", "童话", "玄幻", "修真", "蒸汽朋克", "哥特式"], key="image_style",
+                     on_change=lambda: st.session_state["meta"].update(image_style=st.session_state["image_style"]))
+        # text_input版本
+        # st.text_input(label="图片生成风格", value="二次元风格", key="image_style",
+        #               on_change=lambda: st.session_state["meta"].update(image_style=st.session_state["image_style"]),
+        #               help="默认为二次元风格")
 
 def verify_meta() -> bool:
     # 检查`角色名`和`角色人设`是否空，若为空，则弹出提醒
@@ -110,7 +120,8 @@ def draw_new_image():
         return
     
     # TODO: 加上风格选项
-    image_prompt = '二次元风格。' + image_prompt.strip()
+    image_style = st.session_state["meta"].get("image_style", "二次元风格")
+    image_prompt = f'生成风格: {image_style}。' + image_prompt.strip()
     
     print(f"image_prompt = {image_prompt}")
     n_retry = 3
@@ -138,7 +149,7 @@ def draw_new_image():
 button_labels = {
     "clear_meta": "清空人设",
     "clear_history": "清空对话历史",
-    "gen_picture": "生成图片"
+    "gen_picture": "生成图片",
 }
 if debug:
     button_labels.update({
